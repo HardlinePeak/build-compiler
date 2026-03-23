@@ -28,10 +28,9 @@ result="$path/result.c"
 echo "#include <stdio.h>" >> "$result"
 echo "" >> "$result"
 echo "int main(void) {" >> "$result"
-echo "    #define add_token(id) if (id != ~0)\\" >> "$result"
-echo "        printf(\"%u\\n\", id);" >> "$result"
+echo "    #define add_token(id) if (id != ~0) printf(\"%u\\n\", id)" >> "$result" # По-хорошему, надо и вовсе завернуть в блок и т.д., но... Это излишне в простом примере.
 echo "    const char * stream = \"Example data — it is your variable.\";" >> "$result"
-echo "    // const char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$result"
+echo "    // const char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$result" # Обратите внимание: контракт add_token это unsigned int, а остальное вас не волнует, ведь token вне вашей ответственности.
 echo "    unsigned token;" >> "$result"
 echo "    while (*stream != 0) {" >> "$result"
 echo "        token = ~0;" >> "$result"
