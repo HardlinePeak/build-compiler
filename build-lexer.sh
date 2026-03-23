@@ -76,25 +76,23 @@ while IFS= read -r line; do
     echo "        } else" >> "$path/result.c"
     token=$((token + 1))
 done < "$path/1.layer"
+echo "        {" >> "$path/result.c"
 if [ -f "$path/unknown-token.panic-1" ]; then
-    echo "        {" >> "$path/result.c" # Стилистически не очень, но это лучше, чем возиться со строками, пытаясь избежать переноса строки.
     while IFS= read -r line; do
         echo "            $line" >> "$path/result.c"
     done <  "$path/unknown-token.panic-1"
-    echo "        }" >> "$path/result.c"
 else
-    echo "        {" >> "$path/result.c"
     echo "            stream++;" >> "$path/result.c"
     echo "            continue;" >> "$path/result.c"
-    echo "        }" >> "$path/result.c"
 fi
+echo "        }" >> "$path/result.c"
 max_token=token
 layer=2
 while [ -f "$path/$layer.layer" ]; do
     previous=0
     while IFS= read -r line; do
         if [ "$line" != "" ]; then
-            if [ previous > max_token ]; then
+            if [ $previous -gt $max_token ]; then
                 echo "Incorrect layer!"
                 exit 1
             fi
@@ -123,18 +121,16 @@ while [ -f "$path/$layer.layer" ]; do
         fi
         previous=$((previous + 1))
     done < "$path/$layer.layer"
+    echo "        {" >> "$path/result.c"
     if [ -f "$path/unknown-token.panic-$layer" ]; then
-        echo "        {" >> "$path/result.c"
         while IFS= read -r line; do
             echo "            $line" >> "$path/result.c"
         done <  "$path/unknown-token.panic-$layer"
-        echo "        }" >> "$path/result.c"
     else
-        echo "        {" >> "$path/result.c"
         echo "            stream++;" >> "$path/result.c"
         echo "            continue;" >> "$path/result.c"
-        echo "        }" >> "$path/result.c"
     fi
+    echo "        }" >> "$path/result.c"
     layer=$((layer + 1))
 done
 echo "        add_token(token);" >> "$path/result.c"
