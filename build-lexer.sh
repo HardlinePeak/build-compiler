@@ -83,13 +83,21 @@ if [ -f "$path/unknown-token.panic-1" ]; then
     done <  "$path/unknown-token.panic-1"
     echo "        }" >> "$path/result.c"
 else
+    echo "        {" >> "$path/result.c"
     echo "            stream++;" >> "$path/result.c"
+    echo "            continue;" >> "$path/result.c"
+    echo "        }" >> "$path/result.c"
 fi
+max_token=token
 layer=2
 while [ -f "$path/$layer.layer" ]; do
     previous=0
     while IFS= read -r line; do
-        if [ "$line" != "" ]; then # Можно вынести в функцию. Или нет.
+        if [ "$line" != "" ]; then
+            if [ previous > max_token ]; then
+                echo "Incorrect layer!"
+                exit 1
+            fi
             condition="token == $previous"
             length=0
             string=$line
@@ -122,7 +130,10 @@ while [ -f "$path/$layer.layer" ]; do
         done <  "$path/unknown-token.panic-$layer"
         echo "        }" >> "$path/result.c"
     else
+        echo "        {" >> "$path/result.c"
         echo "            stream++;" >> "$path/result.c"
+        echo "            continue;" >> "$path/result.c"
+        echo "        }" >> "$path/result.c"
     fi
     layer=$((layer + 1))
 done
