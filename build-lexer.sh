@@ -33,7 +33,7 @@ if [ ! -f "$path/1.layer" ]; then
 fi
 # Потом реализую ignore_case и multi_byte, если будет желание.
 > "$path/result.c"
-echo "#include <stdio.h>" >> "$path/result.c" # Временная вставка, которая должна, по-хорошему, определяться аргументами.
+echo "#include <stdio.h>" >> "$path/result.c"
 echo "" >> "$path/result.c"
 echo "int main(void) {" >> "$path/result.c"
 echo "    #define add_token(id) if (id != -1)\\" >> "$path/result.c"
@@ -55,15 +55,34 @@ while IFS= read -r line; do
     while test -n "$string"; do
         char=${string%"${string#?}"}
         string=${string#?}
-        if [ "$char${string%"${string#?}"}" = "\\n" ]; then
-            char="\\n" # И все остальные последовательности, начинающиеся слешем.
-            string=${string#?}
-        elif [ "$char" = "\\" ]; then
-            char="\\\\"
-        elif [ "$char" = "'" ]; then
+        if [ "$char" = "'" ]; then
             char="\\'"
         fi
-        if [ $length = 0 ]; then # Ненавижу подобное...
+        while [ "$char" = "\\" ]; do # Слегка уродливо, но по-своему неплохо, да и лучше сейчас не придумал.
+            next_char=${string%"${string#?}"}
+            if [ "$next_char" = "0" ]; then
+                char="\\0"
+            elif [ "$next_char" = "a" ]; then
+                char="\\a"
+            elif [ "$next_char" = "n" ]; then
+                char="\\n"
+            elif [ "$next_char" = "r" ]; then
+                char="\\r"
+            elif [ "$next_char" = "t" ]; then
+                char="\\t"
+            elif [ "$next_char" = "u" ]; then
+                char="u" # Я не буду этого делать. Не сегодня и не в ближайшее время.
+            elif [ "$next_char" = "v" ]; then
+                char="\\v"
+            elif [ "$next_char" = "x" ]; then
+                char="x" # Нужно ещё дальше парсить...
+            else
+                char="\\\\"
+                break
+            fi
+            string=${string#?}
+        done
+        if [ $length = 0 ]; then
             condition="stream[0] == '$char'"
         else
             condition="$condition && stream[$length] == '$char'"
@@ -72,7 +91,7 @@ while IFS= read -r line; do
     done
     echo "        if ($condition) {" >> "$path/result.c"
     echo "            token = $token; " >> "$path/result.c"
-    echo "            stream += $length;" >> "$path/result.c" # По-хорошему, можно делать инкремент при единицах, но у нас тут кодо-генерация, да и плодить условие разди такой фигни, когда уже разок-другой пренебрёг внешним видом...
+    echo "            stream += $length;" >> "$path/result.c"
     echo "        } else" >> "$path/result.c"
     token=$((token + 1))
 done < "$path/1.layer"
@@ -102,14 +121,33 @@ while [ -f "$path/$layer.layer" ]; do
             while test -n "$string"; do
                 char=${string%"${string#?}"}
                 string=${string#?}
-                if [ "$char${string%"${string#?}"}" = "\\n" ]; then
-                    char="\\n"
-                    string=${string#?}
-                elif [ "$char" = "\\" ]; then
-                    char="\\\\"
-                elif [ "$char" = "'" ]; then
+                if [ "$char" = "'" ]; then
                     char="\\'"
                 fi
+                while [ "$char" = "\\" ]; do
+                    next_char=${string%"${string#?}"}
+                    if [ "$next_char" = "0" ]; then
+                        char="\\0"
+                    elif [ "$next_char" = "a" ]; then
+                        char="\\a"
+                    elif [ "$next_char" = "n" ]; then
+                        char="\\n"
+                    elif [ "$next_char" = "r" ]; then
+                        char="\\r"
+                    elif [ "$next_char" = "t" ]; then
+                        char="\\t"
+                    elif [ "$next_char" = "u" ]; then
+                        char="u"
+                    elif [ "$next_char" = "v" ]; then
+                        char="\\v"
+                    elif [ "$next_char" = "x" ]; then
+                        char="x"
+                    else
+                        char="\\\\"
+                        break
+                    fi
+                    string=${string#?}
+                done
                 condition="$condition && stream[$length] == '$char'"
                 length=$((length + 1))
             done
@@ -121,11 +159,10 @@ while [ -f "$path/$layer.layer" ]; do
         fi
         previous=$((previous + 1))
     done < "$path/$layer.layer"
-    echo "            ;" >> "$path/result.c" # Иначе будет мешать дальнейшим слоям.
+    echo "            ;" >> "$path/result.c"
     layer=$((layer + 1))
 done
 echo "        add_token(token);" >> "$path/result.c"
 echo "    }" >> "$path/result.c"
 echo "}" >> "$path/result.c"
 echo "Okey? No? I can't response you."
-# Я ещё думаю о каком-нибудь +.layer и/или -.layer, который позволит описывать более свободные случаи вроде чисел и идентификаторов.
