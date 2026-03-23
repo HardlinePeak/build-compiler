@@ -77,10 +77,10 @@ while IFS= read -r line; do
     token=$((token + 1))
 done < "$path/1.layer"
 echo "        {" >> "$path/result.c"
-if [ -f "$path/unknown-token.panic-1" ]; then
+if [ -f "$path/panic.c" ]; then
     while IFS= read -r line; do
         echo "            $line" >> "$path/result.c"
-    done <  "$path/unknown-token.panic-1"
+    done <  "$path/panic.c"
 else
     echo "            stream++;" >> "$path/result.c"
     echo "            continue;" >> "$path/result.c"
@@ -121,19 +121,11 @@ while [ -f "$path/$layer.layer" ]; do
         fi
         previous=$((previous + 1))
     done < "$path/$layer.layer"
-    echo "        {" >> "$path/result.c"
-    if [ -f "$path/unknown-token.panic-$layer" ]; then
-        while IFS= read -r line; do
-            echo "            $line" >> "$path/result.c"
-        done <  "$path/unknown-token.panic-$layer"
-    else
-        echo "            stream++;" >> "$path/result.c"
-        echo "            continue;" >> "$path/result.c"
-    fi
-    echo "        }" >> "$path/result.c"
+    echo "            ;" >> "$path/result.c" # Иначе будет мешать дальнейшим слоям.
     layer=$((layer + 1))
 done
 echo "        add_token(token);" >> "$path/result.c"
 echo "    }" >> "$path/result.c"
 echo "}" >> "$path/result.c"
 echo "Okey? No? I can't response you."
+# Я ещё думаю о каком-нибудь +.layer и/или -.layer, который позволит описывать более свободные случаи вроде чисел и идентификаторов.
