@@ -16,12 +16,18 @@ int main(void) {
             token = 1; 
             stream += 4;
         } else
+        {
             stream++;
+            continue;
+        }
         if (token == 0 && stream[0] == ' ' && stream[1] == 'd' && stream[2] == 'a' && stream[3] == 't' && stream[4] == 'a') {
             token = 2; 
             stream += 5;
         } else
+        {
             stream++;
+            continue;
+        }
         add_token(token);
     }
 }
