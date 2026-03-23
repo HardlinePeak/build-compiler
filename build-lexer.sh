@@ -1,18 +1,10 @@
 #!/bin/sh
-ignore_case=false
-multi_byte=false
 path=""
 for arg in "$@"; do
     case "$arg" in
         -h|--help)
             echo "Help message ;)"
             exit 0
-            ;;
-        -i|--ignore-case)
-            ignore_case=true
-            ;;
-        -m|--multi-byte)
-            multi_byte=true
             ;;
         *)
             path="$arg"
@@ -31,18 +23,18 @@ if [ ! -f "$path/1.layer" ]; then
     echo "Oh, no!"
     exit 1
 fi
-# Потом реализую ignore_case и multi_byte, если будет желание.
-> "$path/result.c"
-echo "#include <stdio.h>" >> "$path/result.c"
-echo "" >> "$path/result.c"
-echo "int main(void) {" >> "$path/result.c"
-echo "    #define add_token(id) if (id != -1)\\" >> "$path/result.c"
-echo "        printf(\"%u\\n\", id);" >> "$path/result.c"
-echo "    char * stream = \"Example data — it is your variable.\";" >> "$path/result.c"
-echo "    // char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$path/result.c"
-echo "    unsigned int token;" >> "$path/result.c"
-echo "    while (*stream != 0) {" >> "$path/result.c"
-echo "        token = -1;" >> "$path/result.c"
+result="$path/result.c"
+> "$result"
+echo "#include <stdio.h>" >> "$result"
+echo "" >> "$result"
+echo "int main(void) {" >> "$result"
+echo "    #define add_token(id) if (id != -1)\\" >> "$result"
+echo "        printf(\"%u\\n\", id);" >> "$result"
+echo "    char * stream = \"Example data — it is your variable.\";" >> "$result"
+echo "    // char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$result"
+echo "    unsigned int token;" >> "$result"
+echo "    while (*stream != 0) {" >> "$result"
+echo "        token = -1;" >> "$result"
 token=0
 while IFS= read -r line; do
     if [ "$line" = "" ]; then
@@ -70,12 +62,8 @@ while IFS= read -r line; do
                 char="\\r"
             elif [ "$next_char" = "t" ]; then
                 char="\\t"
-            elif [ "$next_char" = "u" ]; then
-                char="u" # Я не буду этого делать. Не сегодня и не в ближайшее время.
             elif [ "$next_char" = "v" ]; then
                 char="\\v"
-            elif [ "$next_char" = "x" ]; then
-                char="x" # Нужно ещё дальше парсить...
             else
                 char="\\\\"
                 break
@@ -89,22 +77,21 @@ while IFS= read -r line; do
         fi
         length=$((length + 1))
     done
-    echo "        if ($condition) {" >> "$path/result.c"
-    echo "            token = $token; " >> "$path/result.c"
-    echo "            stream += $length;" >> "$path/result.c"
-    echo "        } else" >> "$path/result.c"
+    echo "        if ($condition) {" >> "$result"
+    echo "            token = $token; " >> "$result"
+    echo "            stream += $length;" >> "$result"
+    echo "        } else" >> "$result"
     token=$((token + 1))
 done < "$path/1.layer"
-echo "        {" >> "$path/result.c"
 if [ -f "$path/panic.c" ]; then
+    echo "        {" >> "$result"
     while IFS= read -r line; do
-        echo "            $line" >> "$path/result.c"
+        echo "            $line" >> "$result"
     done <  "$path/panic.c"
+    echo "        }" >> "$result"
 else
-    echo "            stream++;" >> "$path/result.c"
-    echo "            continue;" >> "$path/result.c"
+    echo "            { stream++; continue; }" >> "$result"
 fi
-echo "        }" >> "$path/result.c"
 max_token=token
 layer=2
 while [ -f "$path/$layer.layer" ]; do
@@ -136,12 +123,8 @@ while [ -f "$path/$layer.layer" ]; do
                         char="\\r"
                     elif [ "$next_char" = "t" ]; then
                         char="\\t"
-                    elif [ "$next_char" = "u" ]; then
-                        char="u"
                     elif [ "$next_char" = "v" ]; then
                         char="\\v"
-                    elif [ "$next_char" = "x" ]; then
-                        char="x"
                     else
                         char="\\\\"
                         break
@@ -151,18 +134,18 @@ while [ -f "$path/$layer.layer" ]; do
                 condition="$condition && stream[$length] == '$char'"
                 length=$((length + 1))
             done
-            echo "        if ($condition) {" >> "$path/result.c"
-            echo "            token = $token; " >> "$path/result.c"
-            echo "            stream += $length;" >> "$path/result.c"
-            echo "        } else" >> "$path/result.c"
+            echo "        if ($condition) {" >> "$result"
+            echo "            token = $token; " >> "$result"
+            echo "            stream += $length;" >> "$result"
+            echo "        } else" >> "$result"
             token=$((token + 1))
         fi
         previous=$((previous + 1))
     done < "$path/$layer.layer"
-    echo "            ;" >> "$path/result.c"
+    echo "            ;" >> "$result"
     layer=$((layer + 1))
 done
-echo "        add_token(token);" >> "$path/result.c"
-echo "    }" >> "$path/result.c"
-echo "}" >> "$path/result.c"
+echo "        add_token(token);" >> "$result"
+echo "    }" >> "$result"
+echo "}" >> "$result"
 echo "Okey? No? I can't response you."
