@@ -28,13 +28,13 @@ result="$path/result.c"
 echo "#include <stdio.h>" >> "$result"
 echo "" >> "$result"
 echo "int main(void) {" >> "$result"
-echo "    #define add_token(id) if (id != -1)\\" >> "$result"
+echo "    #define add_token(id) if (id != ~0)\\" >> "$result"
 echo "        printf(\"%u\\n\", id);" >> "$result"
-echo "    char * stream = \"Example data — it is your variable.\";" >> "$result"
-echo "    // char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$result"
-echo "    unsigned int token;" >> "$result"
+echo "    const char * stream = \"Example data — it is your variable.\";" >> "$result"
+echo "    // const char * stream и add_token(unsigned int) — на ваше попечение и реализацию!" >> "$result"
+echo "    unsigned token;" >> "$result"
 echo "    while (*stream != 0) {" >> "$result"
-echo "        token = -1;" >> "$result"
+echo "        token = ~0;" >> "$result"
 token=0
 while IFS= read -r line; do
     if [ "$line" = "" ]; then
